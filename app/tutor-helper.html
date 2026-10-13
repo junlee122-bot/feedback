@@ -71,6 +71,8 @@ input::placeholder,textarea::placeholder{color:var(--muted);opacity:.75}
 .seg button{border:0;background:transparent;border-radius:8px;padding:8px 6px;font-size:14px;font-weight:500;color:var(--muted);cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--sheet);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(20,28,46,.12)}
 
+.row2{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.4fr);gap:10px}
+
 /* actions */
 .actions{display:flex;gap:8px}
 .primary{flex:1;min-height:50px;border:0;border-radius:12px;background:var(--accent);color:var(--on-accent);font-size:16px;font-weight:600;cursor:pointer}
@@ -187,13 +189,16 @@ nav.tabs button[aria-selected="true"]{color:var(--accent);font-weight:600}
 
   <!-- 수업 피드백 -->
   <section data-panel="feedback" aria-labelledby="t-feedback" hidden>
-    <div class="intro"><h2 id="t-feedback">수업 피드백</h2><p>대충 적은 수업 메모를 학부모님께 보낼 메시지로 다듬어요.</p></div>
+    <div class="intro"><h2 id="t-feedback">수업 피드백</h2><p>대충 적은 수업 메모를 내 스타일의 학부모님 피드백으로 써요.</p></div>
     <div class="sheet">
-      <div class="field"><span class="flabel">받는 사람</span>
-        <div class="seg" id="f-to" role="group" aria-label="받는 사람"><button type="button" data-v="학부모님" aria-pressed="true">학부모님</button><button type="button" data-v="학생" aria-pressed="false">학생</button></div>
+      <div class="field"><span class="flabel">종류</span>
+        <div class="seg" id="f-kind" role="group" aria-label="피드백 종류"><button type="button" data-v="lesson" aria-pressed="true">회차</button><button type="button" data-v="individual" aria-pressed="false">개별</button><button type="button" data-v="notice" aria-pressed="false">안내</button><button type="button" data-v="summary" aria-pressed="false">총정리</button></div>
       </div>
-      <div class="field"><label class="flabel" for="f-student">학생 <span class="opt">선택</span></label><input type="text" id="f-student" placeholder="예: 지민 (고2, 한국사 내신)"></div>
-      <div class="field"><label class="flabel" for="f-memo">수업 메모</label><textarea id="f-memo" rows="5" placeholder="예: 3회차. 조선 전기 정치 끝. 퀴즈 16/20, 붕당 순서 헷갈림. 집중 좋았음. 숙제 교과서 85~92쪽, 기출 20문항. 다음 시간 조선 후기"></textarea></div>
+      <div class="row2">
+        <div class="field"><label class="flabel" for="f-round" id="f-round-label">회차</label><input type="text" id="f-round" placeholder="예: 11-3"></div>
+        <div class="field"><label class="flabel" for="f-student">학생</label><input type="text" id="f-student" placeholder="예: 지우·도윤·하린"></div>
+      </div>
+      <div class="field"><label class="flabel" for="f-memo">수업 메모</label><textarea id="f-memo" rows="6" placeholder="예: 지우 도윤 수행평가 대비, 작품 다시 훑고 인물 행동 의도 정리. 하린 쪽지시험 보어/부사어 헷갈림 → 개념 설명. 숙제 지우 평가문제집 8~12쪽 월요일까지, 도윤 자습서 62~65쪽, 하린 시험지"></textarea></div>
       <div class="field" data-picker id="f-pick">
         <span class="flabel">수업 노트·문제지 사진 <span class="opt">선택</span> <span class="pick-count"></span></span>
         <label class="pick"><input type="file" accept="image/*" multiple class="vh" id="f-files"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="10" r="1.6"/><path d="m21 16-5-5-8 8"/></svg>사진 고르기</label>
@@ -282,8 +287,9 @@ const FIELDS = [
   {k:"schedule", label:"가능한 요일·시간", ph:"예: 평일 저녁, 토요일 오전", short:true},
   {k:"area", label:"지역·비대면", ph:"예: 서울 서대문·마포, 비대면 가능", short:true},
   {k:"strengths", label:"나만의 강점", ph:"제안서에서 강조하고 싶은 점"},
-  {k:"proposalTone", label:"제안서 말투", ph:"예: 정중하지만 딱딱하지 않게, 이모지 없이", short:true},
-  {k:"feedbackTone", label:"피드백 말투", ph:"예: 학부모님은 '어머님', 학생에게도 존댓말", short:true}
+  {k:"proposalTone", label:"제안서 말투", ph:"비워 두면 차분한 합니다체로 써요", short:true},
+  {k:"feedbackTone", label:"피드백 말투", ph:"비워 두면 실제 피드백에서 정리한 기본 스타일로 써요", short:true},
+  {k:"feedbackSamples", label:"내 피드백 예시", ph:"실제로 보낸 피드백 1~3개를 그대로 붙여넣으면 말투와 구성을 똑같이 따라 써요", rows:6, private:true}
 ];
 const TYPE_LABEL = {proposal:"제안서", feedback:"피드백", correction:"첨삭"};
 const NO_CLAUDE = "Claude에 연결되지 않았어요. claude.ai나 Claude 앱에서 열어야 동작해요.";
@@ -297,8 +303,8 @@ const EX_PROPOSAL = {students:[{
   questions:["학교 서술형은 몇 문항, 몇 점인가요?"]
 }]};
 const EX_FEEDBACK = {
-  message:"안녕하세요, 학부모님. 국어 3회차 수업 피드백 드립니다.\n\n오늘은 현대시 2단원을 마무리했습니다. 단원 퀴즈는 10문항 중 8문항을 맞혔고, 시어의 의미를 묻는 문제를 특히 잘 풀었습니다.\n\n표현법 구분은 아직 헷갈려 해서, 다음 수업 처음에 표현법만 따로 정리하겠습니다.\n\n숙제\n- 교과서 45~52쪽 정리\n- 기출 15문항 (다음 수업 전까지)\n\n다음 시간에는 고전시가를 시작합니다. 감사합니다.",
-  checks:["표현법 정리 계획은 도우미가 제안한 내용이에요"]
+  message:"11-3회차 수업 피드백 (지우·도윤·하린)\n\n📌 수업 내용\n\n이번 시간에도 학교별 일정에 맞춰 △△중과 ○○중 학생들의 진도를 나누어 진행했습니다.\n\n△△중 지우·도윤 학생은 다음 주 수행평가에 대비해 작품을 처음부터 다시 훑으며 인물의 행동 의도를 정리했습니다. 수행평가는 줄거리를 아는 수준으로는 충분하지 않고, 각 장면에서 인물이 왜 그렇게 행동했는지를 근거와 함께 풀어내야 하기 때문입니다.\n\n○○중 하린 학생은 학교 쪽지시험을 함께 살펴보며, 헷갈려 놓친 보어와 부사어 구분 문항의 개념 설명에 시간을 들였습니다. 이런 부분은 기준이 흐릿한 채로 넘어가면 문제를 풀 때마다 계속 걸리게 되므로, 쪽지시험에서 이 지점이 드러난 것은 오히려 다행스러운 일입니다.\n\n📚 숙제 공지\n\n지우 학생: 평가문제집 8~12쪽 (월요일까지)\n도윤 학생: 자습서 62~65쪽\n하린 학생: 배부한 시험지 풀이\n\n한 번에 몰아서 풀기보다 며칠에 나누어 차분히 풀어 오면 훨씬 남는 것이 많습니다. 가정에서도 한 번씩 짚어 주시면 큰 도움이 되겠습니다.",
+  checks:["수행평가 대비 이유 문장은 도우미가 덧붙인 설명이에요"]
 };
 const EX_CORRECTION = {
   subject:"인문 논술 · 비교형",
@@ -402,7 +408,7 @@ function persist(ctx, res){ if (ctx && ctx.id) store.updateHistory(ctx.id, res).
 
 /* ---------- profile ---------- */
 function profileText(){
-  return FIELDS.map(f => `- ${f.label}: ${str(S.profile[f.k]) || "(비어 있음)"}`).join("\n");
+  return FIELDS.filter(f => !f.private).map(f => `- ${f.label}: ${str(S.profile[f.k]) || "(비어 있음)"}`).join("\n");
 }
 function coreMissing(){ return FIELDS.filter(f => f.core && !str(S.profile[f.k])).length; }
 function updateChip(){
@@ -419,7 +425,7 @@ function buildProfileForm(){
     const id = "pf-" + f.k;
     const ctl = f.short
       ? h("input", {type:"text", id, name:f.k, placeholder:f.ph})
-      : h("textarea", {id, name:f.k, rows:"2", placeholder:f.ph});
+      : h("textarea", {id, name:f.k, rows:String(f.rows || 2), placeholder:f.ph});
     ctl.addEventListener("input", () => { S.dirty = true; $("#pstatus").textContent = "저장하지 않은 변경이 있어요."; $("#pstatus").className = "status"; });
     return h("div", {class:"field"}, h("label", {class:"flabel", for:id}, f.label, f.core ? null : h("span", {class:"opt"}, "선택")), ctl);
   }));
@@ -481,9 +487,10 @@ function makePicker(root){
 }
 
 /* ---------- segmented controls ---------- */
-function makeSeg(root){
+function makeSeg(root, onChange){
   $$("button", root).forEach(b => b.addEventListener("click", () => {
     $$("button", root).forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+    if (onChange) onChange(b.dataset.v);
   }));
   return { get value(){ const b = $('button[aria-pressed="true"]', root); return b ? b.dataset.v : ""; } };
 }
@@ -540,7 +547,7 @@ ${memo || "(없음)"}
 - 본문 600~1,000자.
 - "1등급 보장", "100점 만들어 드립니다" 같은 성적·합격 보장 표현은 쓰지 않는다.
 - ${RULES_NO_INVENT}
-- 말투: ${str(S.profile.proposalTone) || "정중하고 따뜻한 존댓말, 이모지 없음"}
+- 말투: ${str(S.profile.proposalTone) || "차분한 합니다체. 계획마다 왜 그렇게 하는지 이유를 한 문장씩 붙인다. 과장 없이, 이모지 없이"}
 - "귀하의 자녀분" 같은 템플릿 문구 대신 요청서의 표현을 쓴다.
 - 이미지가 학생 요청서가 아니면 students를 빈 배열로 두고 notice에 이유를 한 문장으로 쓴다.
 
@@ -549,35 +556,64 @@ ${memo || "(없음)"}
 {"notice":"","students":[{"label":"학교 · 과목 (짧게)","summary":[{"k":"과목","v":"..."}],"proposal":"제안서 본문","checks":["보내기 전 확인할 것 ([ ] 빈칸, 요청서에 없는 수업료·요일 등)"],"questions":["첫 상담 때 물어볼 질문 2~3개"]}]}`;
 }
 
+const FEEDBACK_KINDS = {
+  lesson:{label:"회차 수업 피드백", field:"회차", ph:"예: 11-3, 사회 3-2"},
+  individual:{label:"개별 피드백", field:"주제", ph:"예: 오답 정리 요청"},
+  notice:{label:"수업 안내", field:"주제", ph:"예: 단축 수업"},
+  summary:{label:"기간 총정리", field:"기간", ph:"예: 여름방학"}
+};
+/* Distilled from the teacher's own 64 sent feedback messages; names and schools are placeholders. */
+const FEEDBACK_STYLE = `## 선생님 피드백 스타일 (실제로 보낸 피드백 64건에서 정리)
+종류와 제목
+- 회차 피드백(그룹): "11-3회차 수업 피드백 (지우·도윤·하린)". 과목이 따로면 "3-2회차 사회 수업 피드백 (지우·하린)". 섹션: 📌 수업 내용 → 📚 숙제 공지. 800~1,500자.
+- 회차 피드백(개별, 고3 등): "도윤 학생 3-4회차 수업 피드백". 메모에 날짜·시간이 있으면 다음 줄에 "수업일: 9월 9일 수요일 (5:30-7:30)". 섹션: 📚 수업 내용 → (필요하면 "📈 현재 성적에 대해", "💬 시간 관리에 대해" 같은 주제 섹션) → 📚 숙제 (번호 목록). 800~1,500자.
+- 개별 피드백: "지우 학생 개별 피드백 (주제)". 섹션 없이 문단만. 500~900자.
+- 수업 안내: "수업 안내 (단축 수업 · 지우·하린)". 섹션 없이 무슨 일이 있었는지, 그렇게 판단한 이유, 회차 처리, 부탁. 300~500자.
+- 기간 총정리: "도윤 학생 여름방학 수업 총정리". 📚 진행 내용 → 📈 현재 상태와 다음 목표. 1,200~1,800자.
+- 특별한 수업은 제목 괄호에 덧붙인다. 예: "(특별 수업 · 3시간)". 회차 정보가 없으면 [회차].
+- 메모가 짧으면 억지로 늘리지 않는다.
+쓰는 법
+- 인사 없이 바로 수업 내용으로 시작한다. 합니다체. 이모지는 섹션 제목에만 쓴다.
+- 문단 흐름: 지난 시간과 연결("지난 시간에 ~했다면, 이번에는 ~") → 한 일(교재, 쪽수, 작품, 방식) → 왜 그렇게 했는지 교육적 이유("~하기 때문입니다", "~인 만큼", "~라 판단했습니다", "~하는 편이 훨씬 효과적입니다") → 학생 모습(구체적 결과) → 의미와 다음 계획.
+- 문장은 짧게 끊지 않고 연결어미(~는데, ~만큼, ~라, ~면서)로 이어지는 긴 호흡으로 쓴다.
+- 그룹 수업은 학교·진도별로 묶는다("△△중 지우·도윤 학생은 …"). 학생마다 다른 활동을 했으면 공통 도입 한 문장 뒤에 "✏️ 김지우 학생" 소제목으로 나눈다.
+- 개념을 다룬 날은 판단 기준이나 짧은 예문으로 개념 자체를 설명하는 문단을 넣는다.
+- 호칭은 처음에 "하린 학생은", 이후 "하린이는". 문제점은 관찰한 사실로 쓰고, 원인은 "~로 보입니다"로 조심스럽게 쓰며, 탓하지 않고 다시 해석해 준다("하기 싫어서 미룬 것이 아니라 어디서부터 손대야 할지 몰라 넘어간 쪽에 가까워 보였습니다", "이 지점이 드러난 것은 오히려 다행스러운 일입니다"). 칭찬은 근거와 함께 쓴다.
+- 수업 운영 소식은 숙제 공지 앞에 "한 가지 더 말씀드리자면, ~"으로 덧붙인다.
+숙제 공지
+- 학생별로 한 줄: "지우 학생: 평가문제집 8~12쪽 (월요일까지)". 숙제가 같으면 묶는다: "△△중 지우·도윤 학생: …". 고3 개별 수업은 "1. …" 번호 목록.
+- 목록 아래 운영 문단: 분량을 그렇게 잡은 이유와 푸는 방법. 단골 문장(상황에 맞을 때만): "한 번에 몰아서 풀기보다 며칠에 나누어 차분히 풀어 오면 훨씬 남는 것이 많습니다." "모르는 문항은 억지로 찍지 말고 어디에서 막혔는지 표시해 오면, 다음 시간에 그 지점부터 바로 채워 나가겠습니다." "오답은 정답만 옮겨 적지 말고 왜 그 선지를 골랐는지, 근거가 어디에 있는지를 짧게라도 적어 오면 좋겠습니다."
+- "~하도록 안내했습니다"처럼 이미 한 일로 쓰는 문장은 메모에 그런 안내가 있을 때만 쓴다.
+맺음
+- 중등: "가정에서도 한 번씩 짚어 주시면 큰 도움이 되겠습니다." / "가정에서도 한 번씩 챙겨 봐 주시면 감사하겠습니다. 감사합니다."
+- 고3: "항상 감사드립니다."
+- 가정에 드리는 구체적인 부탁은 메모에 있을 때만 쓴다.`;
+
 function feedbackPrompt(o){
-  return `너는 과외 선생님을 돕는 수업 피드백 작성 도우미다. 오늘은 ${today()}이다.
-받는 사람: ${o.to}
-학생: ${o.student || "(이름 없음)"}
-학생 성향·말투 요청: ${o.tone || "(없음)"}
-선생님 호칭: ${str(S.profile.title) || "(없음)"}
-선생님 피드백 말투: ${str(S.profile.feedbackTone) || "학부모님께는 '학부모님', 정중한 존댓말, 이모지 없음"}
+  const kind = FEEDBACK_KINDS[o.kind] || FEEDBACK_KINDS.lesson;
+  const samples = str(S.profile.feedbackSamples).slice(0, 8000);
+  return `너는 과외 선생님의 수업 피드백을 대신 써 주는 도우미다. 선생님이 직접 쓴 것처럼 써야 한다. 오늘은 ${today()}이다.
+
+## 이번 피드백
+- 종류: ${kind.label}
+- ${kind.field}: ${o.round || "(없음)"}
+- 학생: ${o.student || "(메모에서 찾는다)"}
+- 학생 성향·말투 요청: ${o.tone || "(없음)"}
+- 선생님이 정한 피드백 말투: ${str(S.profile.feedbackTone) || "(없음. 아래 스타일대로)"}
 
 ## 수업 메모
 ${o.memo || "(메모 없음, 첨부 사진만 있음)"}
 ${o.hasImages ? "\n첨부 이미지는 수업 노트·문제지 같은 참고 자료다. 메모와 함께 근거로만 쓴다.\n" : ""}
-## 구성
-1. 인사 (날짜·회차가 메모에 있으면 포함)
-2. 오늘 수업 내용: 진도와 한 일 1~3줄
-3. 잘한 점: 메모에 근거한 구체적 행동이나 결과 1~2개
-4. 보완할 점과 다음 계획
-5. 숙제: 목록으로, 분량과 기한
-6. 다음 수업 예고와 마무리 인사
-
-## 원칙
-- 메모에 없는 사실(점수, 태도, 진도, 원인)을 만들지 않는다. 빠진 정보는 [ ]로 두고 checks에 적는다.
-- 아쉬운 점은 사실 → (메모에 있을 때만) 원인 → 계획 순서. 계획을 네가 제안했다면 checks에 그렇다고 적는다.
-- 학생을 탓하는 말투는 피한다.
-- 받는 사람 기준으로 쓴다. 학부모님께 보낼 때 숙제는 학생이 할 일로 쓰고, 학부모님께는 "한 번 챙겨 봐 주세요" 정도로만 부탁한다. 학생에게 보낼 때는 학생에게 직접 말한다.
-- 카톡 한두 화면, 300~600자.
+${FEEDBACK_STYLE}
+${samples ? "\n## 선생님이 실제로 보낸 피드백 예시\n말투, 구성, 분량을 이 예시대로 따른다. 예시의 내용이나 학생 정보는 가져오지 않는다.\n\n" + samples + "\n" : ""}
+## 사실과 덧붙임
+- 사실은 메모에 있는 것만 쓴다: 한 일, 학생 모습, 점수, 숙제, 기한, 일정. 없는 활동을 한 것처럼 쓰지 않는다. 빠진 정보는 [ ]로 둔다.
+- 덧붙여도 되는 것: 그 활동을 왜 그렇게 했는지 교육적 이유, 메모에 나온 개념의 교과 수준 설명, 숙제 운영 문단. 학생에 대한 새로운 사실은 만들지 않는다.
+- 문제의 원인이 메모에 없으면 단정하지 않는다.
 
 ## 출력
 아래 모양의 JSON 하나만 답한다. 문자열 안의 줄바꿈은 \\n으로 쓴다.
-{"message":"메시지 본문","checks":["보내기 전 확인할 것"]}`;
+{"message":"제목 줄부터 맺음까지 메시지 전체","checks":["[ ] 빈칸", "도우미가 덧붙인 이유·설명 중 선생님이 확인할 곳"]}`;
 }
 
 const TONES = {
@@ -682,11 +718,12 @@ const PROPOSAL_REVISIONS = [
   {label:"수업료 넣어서", ask:"아래 프로필의 수업료와 가능한 요일·시간을 마무리 부분에 자연스럽게 넣어 줘. 비어 있으면 [수업료], [가능한 요일·시간] 빈칸으로 넣어.",
     extra:() => `수업료: ${str(S.profile.fee) || "(비어 있음)"}\n가능한 요일·시간: ${str(S.profile.schedule) || "(비어 있음)"}\n지역·비대면: ${str(S.profile.area) || "(비어 있음)"}`}
 ];
+const KEEP_STYLE = " 제목 줄, 섹션 이모지 제목(📌 📚 ✏️ 📈 💬), 합니다체, 숙제 목록 형식은 그대로 둬.";
 const FEEDBACK_REVISIONS = [
-  {label:"더 짧게", ask:"카톡 한 화면 안으로 줄여 줘."},
-  {label:"더 따뜻하게", ask:"더 따뜻하고 다정한 말투로 바꿔 줘. 이모지는 쓰지 마."},
-  {label:"더 격식 있게", ask:"더 격식 있는 말투로 바꿔 줘."},
-  {label:"학생에게 보내는 말로", ask:"학부모님이 아니라 학생에게 직접 보내는 메시지로 바꿔 줘."}
+  {label:"더 짧게", ask:"이유 설명을 줄여 지금의 절반 정도 분량으로 줄여 줘. 사실과 숙제는 빼지 마." + KEEP_STYLE},
+  {label:"더 자세하게", ask:"각 활동을 왜 그렇게 했는지 교육적 이유와 개념 설명을 조금 더 풀어 써 줘. 원문에 없는 활동이나 학생 모습은 만들지 마." + KEEP_STYLE},
+  {label:"더 따뜻하게", ask:"학생을 격려하는 문장을 조금 더 살려서 따뜻하게 바꿔 줘. 이모지는 본문에 쓰지 마." + KEEP_STYLE},
+  {label:"학생에게 보내는 말로", ask:"학부모님이 아니라 학생에게 직접 보내는 메시지로 바꿔 줘. 존댓말을 유지해."}
 ];
 const STUDENT_MSG_REVISIONS = [
   {label:"더 짧게", ask:"핵심만 남겨 짧게 줄여 줘."},
@@ -844,7 +881,12 @@ function init(){
 
   // pickers, controls
   const pp = makePicker($("#p-pick")), fp = makePicker($("#f-pick")), cp = makePicker($("#c-pick")), prp = makePicker($("#pr-pick"));
-  const fTo = makeSeg($("#f-to")), cTone = makeSeg($("#c-tone"));
+  const fKind = makeSeg($("#f-kind"), v => {
+    const k = FEEDBACK_KINDS[v] || FEEDBACK_KINDS.lesson;
+    $("#f-round-label").textContent = k.field;
+    $("#f-round").placeholder = k.ph;
+  });
+  const cTone = makeSeg($("#c-tone"));
   const pj = makeJob($("#p-run").closest(".sheet")), fj = makeJob($("#f-run").closest(".sheet")),
         cj = makeJob($("#c-run").closest(".sheet")), prj = makeJob($("#pr-run").closest(".sheet"));
 
@@ -863,13 +905,14 @@ function init(){
   $("#f-run").addEventListener("click", async () => {
     const memo = $("#f-memo").value.trim(), imgs = fp.blobs;
     if (!memo && !imgs.length){ fj.set("수업 메모를 적거나 사진을 올려 주세요.", "err"); return; }
-    const o = {to:fTo.value, student:$("#f-student").value.trim(), tone:$("#f-tone").value.trim(), memo, hasImages:imgs.length > 0};
+    const o = {kind:fKind.value, round:$("#f-round").value.trim(), student:$("#f-student").value.trim(), tone:$("#f-tone").value.trim(), memo, hasImages:imgs.length > 0};
     const res = await fj.json(feedbackPrompt(o), imgs);
     if (!res) return;
     if (!str(res.message)){ fj.set(errCopy("invalid_json"), "err"); return; }
     const ctx = {id:null};
     showResult("#f-out", renderFeedback(res, ctx));
-    ctx.id = await saveHistory("feedback", (o.student ? o.student + " · " : "") + (memo.split("\n")[0].slice(0, 30) || "수업 피드백"), res);
+    const firstLine = str(res.message).split("\n")[0].slice(0, 60);
+    ctx.id = await saveHistory("feedback", firstLine || "수업 피드백", res);
   });
 
   $("#c-run").addEventListener("click", async () => {
